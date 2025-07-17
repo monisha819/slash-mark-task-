@@ -1,59 +1,22 @@
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import os
+from textblob import TextBlob
 
-# Define dataset paths
-train_dir = "dataset/train"
-validation_dir = "dataset/validation"
+# Function to check polarity
+def check_polarity(text):
+    blob = TextBlob(text)
+    polarity = blob.sentiment.polarity  # Polarity ranges from -1 (neg) to 1 (pos)
 
-# Data preprocessing
-train_datagen = ImageDataGenerator(rescale=1.0/255)
-val_datagen = ImageDataGenerator(rescale=1.0/255)
+    if polarity > 0:
+        sentiment = "Positive"
+    elif polarity < 0:
+        sentiment = "Negative"
+    else:
+        sentiment = "Neutral"
 
-train_generator = train_datagen.flow_from_directory(
-    train_dir,
-    target_size=(150, 150),
-    batch_size=20,
-    class_mode='binary'
-)
+    return polarity, sentiment
 
-validation_generator = val_datagen.flow_from_directory(
-    validation_dir,
-    target_size=(150, 150),
-    batch_size=20,
-    class_mode='binary'
-)
+# Example
+text_input = input("Enter a sentence to check its polarization: ")
+polarity, sentiment = check_polarity(text_input)
 
-# CNN Model
-model = tf.keras.models.Sequential([
-    tf.keras.layers.Conv2D(32, (3,3), activation='relu', input_shape=(150, 150, 3)),
-    tf.keras.layers.MaxPooling2D(2,2),
-
-    tf.keras.layers.Conv2D(64, (3,3), activation='relu'),
-    tf.keras.layers.MaxPooling2D(2,2),
-
-    tf.keras.layers.Conv2D(128, (3,3), activation='relu'),
-    tf.keras.layers.MaxPooling2D(2,2),
-
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(512, activation='relu'),
-    tf.keras.layers.Dense(1, activation='sigmoid')  # Binary classification
-])
-
-# Compile model
-model.compile(loss='binary_crossentropy',
-              optimizer='adam',
-              metrics=['accuracy'])
-
-# Train the model
-model.fit(
-    train_generator,
-    steps_per_epoch=100,  # depends on your dataset size
-    epochs=10,
-    validation_data=validation_generator,
-    validation_steps=50  # depends on your dataset size
-)
-
-# Save model
-model.save("dogs_vs_cats_model.h5")
-print("Model saved as dogs_vs_cats_model.h5")
+print(f"\nPolarity Score: {polarity}")
+print(f"Sentiment: {sentiment}")
